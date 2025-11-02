@@ -2294,12 +2294,28 @@ async function fetchMessagesBetween({
     url.searchParams.set("limit", "100");
     url.searchParams.set("after", after);
 
+    console.log(`[discord-fetch] Fetching messages page ${page} from channel ${channelId}`);
     const response = await fetch(url, {
       headers: buildDiscordHeaders(token),
     });
 
     if (!response.ok) {
       const errorBody = await safeJson(response);
+      console.error(`[discord-fetch] ❌ Failed to fetch messages (status ${response.status})`);
+      console.error(`[discord-fetch] URL: ${url.toString()}`);
+      console.error(`[discord-fetch] Error response:`, errorBody);
+      
+      // Log specific permission error details
+      if (response.status === 403) {
+        console.error(`[discord-fetch] 🔒 403 Forbidden - Permission Issue`);
+        console.error(`[discord-fetch] This endpoint requires: Read Message History permission`);
+        console.error(`[discord-fetch] Current permissions requested in invite: 68608 (View Channels + Send Messages + Read Message History)`);
+        console.error(`[discord-fetch] If bot can send messages but not read, check:`);
+        console.error(`[discord-fetch] 1. Channel-specific permission overrides`);
+        console.error(`[discord-fetch] 2. Bot role position in hierarchy`);
+        console.error(`[discord-fetch] 3. Whether Read Message History was actually granted during invite`);
+      }
+      
       throw new Error(
         `Failed to fetch Discord messages (status ${response.status}): ${
           typeof errorBody === "string"
