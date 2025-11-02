@@ -672,7 +672,7 @@ const server = Bun.serve({
       const { minutes: lookbackMinutes } = lookbackValidation;
 
       const agentBaseUrl =
-        process.env.AGENT_URL || `https://x402-summariser-production.up.railway.app`;
+        process.env.AGENT_URL || `https://cumbot-production.up.railway.app`;
       const entrypointPath = "Cum%20For";
       const entrypointUrl = `${agentBaseUrl}/entrypoints/${entrypointPath}/invoke`;
       const price = process.env.ENTRYPOINT_PRICE || "1.00";
@@ -1418,7 +1418,7 @@ const server = Bun.serve({
         const facilitatorUrl =
           process.env.FACILITATOR_URL || "https://facilitator.x402.rs";
         const agentBaseUrl =
-          process.env.AGENT_URL || `https://x402-summariser-production.up.railway.app`;
+          process.env.AGENT_URL || `https://cumbot-production.up.railway.app`;
         const fullEntrypointUrl =
           agentBaseUrl + url.pathname + (url.search ? url.search : "");
         const price = process.env.ENTRYPOINT_PRICE || "0.05";
