@@ -86,15 +86,18 @@ function verifyDiscordRequest(
 // Handle Discord interactions
 async function handleDiscordInteraction(req: Request): Promise<Response> {
   try {
+    console.log("[discord] Handling interaction...");
     const signature = req.headers.get("x-signature-ed25519");
     const timestamp = req.headers.get("x-signature-timestamp");
 
     const body = await req.text();
+    console.log("[discord] Body received, length:", body.length);
     
     // Parse interaction first to check if it's a PING (verification request)
     let interaction;
     try {
       interaction = JSON.parse(body);
+      console.log("[discord] Interaction parsed, type:", interaction.type);
     } catch (e) {
       console.error("[discord] Failed to parse interaction body:", e);
       return Response.json({ error: "Invalid JSON" }, { status: 400 });
@@ -132,12 +135,15 @@ async function handleDiscordInteraction(req: Request): Promise<Response> {
 
     // Handle APPLICATION_COMMAND
     if (interaction.type === 2) {
+      console.log("[discord] Received APPLICATION_COMMAND");
       const { name, options } = interaction.data || {};
+      console.log("[discord] Command name:", name);
       // channel_id and guild_id are at the interaction level, not in data
       const channel_id = interaction.channel_id || interaction.channel?.id;
       const guild_id = interaction.guild_id || interaction.guild?.id;
 
       if (name === "cum") {
+        console.log("[discord] Processing /cum command");
         // Get "for" option (required) and "minutes" option (optional)
         const forOption = options?.find((opt: any) => opt.name === "for");
         const minutesOption = options?.find((opt: any) => opt.name === "minutes");
