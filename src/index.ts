@@ -593,7 +593,14 @@ const server = Bun.serve({
 
       // Health checks
       if (url.pathname === "/" || url.pathname === "/health" || url.pathname === "/healthz") {
-        return new Response("OK", { status: 200, headers: { "Content-Type": "text/plain" } });
+        console.log(`[server] Health check: ${req.method} ${url.pathname}`);
+        return new Response("OK", { 
+          status: 200, 
+          headers: { 
+            "Content-Type": "text/plain",
+            "Cache-Control": "no-cache"
+          } 
+        });
       }
 
     // Discord interactions endpoint
