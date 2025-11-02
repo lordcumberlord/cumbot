@@ -17,11 +17,9 @@ const command = {
   name: "cum",
   description: "Summon /Cum to philosophize about a topic or person",
   type: 1, // CHAT_INPUT
-  default_member_permissions: "1024", // View Channels (permission bit)
-  // Note: To combine permissions, use bitwise OR:
-  // View Channels (1024) | Read Message History (65536) | Send Messages (2048) | Use Slash Commands (0, always granted)
-  // = 1024 | 65536 | 2048 = 68568
-  // But Discord handles common permissions automatically, so 1024 (View Channels) is often sufficient
+  // Set to null to allow all members to use the command
+  // Bot permissions are set via the invite URL, not here
+  default_member_permissions: null,
   options: [
     {
       name: "for",
