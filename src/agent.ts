@@ -959,6 +959,12 @@ addEntrypoint({
     response: z.string(),
   }),
   async handler(ctx) {
+    // Log IMMEDIATELY at the very start
+    console.log("=".repeat(80));
+    console.log("[CUMBOT-HANDLER] === HANDLER CALLED ===");
+    console.log("[CUMBOT-HANDLER] Input:", JSON.stringify(ctx.input, null, 2));
+    console.log("=".repeat(80));
+    
     const { query, platform, channelId, chatId, serverId, lookbackMinutes } = ctx.input;
     
     // Determine query type
