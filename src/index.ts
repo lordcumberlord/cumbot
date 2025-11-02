@@ -354,6 +354,7 @@ After payment, /Cum's response will appear here.`;
         }
         })();
 
+        console.log("[discord] Returning deferred response immediately");
         return initialResponse;
       }
     }
