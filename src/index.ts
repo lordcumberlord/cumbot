@@ -179,7 +179,7 @@ async function handleDiscordInteraction(req: Request): Promise<Response> {
           const followupUrl = `${baseUrl}/webhooks/${interaction.application_id}/${interaction.token}`;
 
           // Call the agent-kit entrypoint (which handles x402 payments)
-          const agentBaseUrl = process.env.AGENT_URL || `https://x402-summariser-production.up.railway.app`;
+          const agentBaseUrl = process.env.AGENT_URL || `https://cumbot-production.up.railway.app`;
           const entrypointUrl = `${agentBaseUrl}/entrypoints/Cum%20For/invoke`;
 
           // Ensure channel_id is valid
