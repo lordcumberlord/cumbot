@@ -131,4 +131,3 @@ if queryType is "person" and chatContext shows their recent messages, notice the
 keep it under 280 characters total.
 
 output format: just your response text, lowercase, 1-3 lines, no prefix, no /Cum header.`;
-
