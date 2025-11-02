@@ -1711,11 +1711,9 @@ if (telegramToken) {
       // For any other errors, log but don't crash
       console.error("[telegram] Failed to start bot:", err?.message || err);
       console.warn("[telegram] Continuing without Telegram bot - Discord bot should still work");
-    } catch (criticalError: any) {
-      // Catch-all for any unexpected errors
-      console.error("[telegram] Critical error starting bot (non-fatal):", criticalError);
     }
   }).catch((criticalError) => {
+    // Catch-all for any unexpected promise rejections
     console.error("[telegram] Unhandled promise rejection (non-fatal):", criticalError);
   });
 } else {
