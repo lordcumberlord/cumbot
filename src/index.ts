@@ -93,31 +93,7 @@ async function handleDiscordInteraction(req: Request): Promise<Response> {
     const body = await req.text();
     console.log("[discord] Body received, length:", body.length);
     
-    // Parse interaction first to check if it's a PING (verification request)
-    let interaction;
-    try {
-      interaction = JSON.parse(body);
-      console.log("[discord] Interaction parsed, type:", interaction.type);
-    } catch (e) {
-      console.error("[discord] Failed to parse interaction body:", e);
-      return Response.json({ error: "Invalid JSON" }, { status: 400 });
-    }
-
-    // Handle PING (Discord's verification) - respond immediately for verification
-    if (interaction.type === 1) {
-      console.log("[discord] Received PING (verification), responding with PONG");
-      // For verification PINGs, verify signature but be lenient
-      if (PUBLIC_KEY && signature && timestamp) {
-        const isValid = verifyDiscordRequest(body, signature, timestamp);
-        if (!isValid) {
-          console.warn("[discord] Invalid signature on PING - but responding anyway for verification");
-          // Still respond with PONG for verification to pass
-        }
-      }
-      return Response.json({ type: 1 });
-    }
-    
-    // For all other interaction types, verify signature strictly
+    // Verify signature FIRST (before parsing) - required for Discord verification
     if (PUBLIC_KEY) {
       if (!signature || !timestamp) {
         console.warn("[discord] Missing signature headers");
@@ -127,10 +103,36 @@ async function handleDiscordInteraction(req: Request): Promise<Response> {
       const isValid = verifyDiscordRequest(body, signature, timestamp);
       if (!isValid) {
         console.warn("[discord] Invalid signature");
+        // Try to parse to see if it's a PING for better error message
+        try {
+          const interaction = JSON.parse(body);
+          if (interaction.type === 1) {
+            console.error("[discord] PING verification failed - check DISCORD_PUBLIC_KEY in Railway");
+          }
+        } catch (e) {
+          // Ignore parse errors
+        }
         return Response.json({ error: "Invalid signature" }, { status: 401 });
       }
+      console.log("[discord] Signature verified successfully");
     } else {
       console.warn("[discord] DISCORD_PUBLIC_KEY not set - signature verification disabled");
+    }
+    
+    // Parse interaction after signature verification
+    let interaction;
+    try {
+      interaction = JSON.parse(body);
+      console.log("[discord] Interaction parsed, type:", interaction.type);
+    } catch (e) {
+      console.error("[discord] Failed to parse interaction body:", e);
+      return Response.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    // Handle PING (Discord's verification) - respond immediately
+    if (interaction.type === 1) {
+      console.log("[discord] Received PING (verification), responding with PONG");
+      return Response.json({ type: 1 });
     }
 
     // Handle APPLICATION_COMMAND
