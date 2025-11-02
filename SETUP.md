@@ -64,10 +64,10 @@ NETWORK=base
 DEFAULT_PRICE=1.00
 ENTRYPOINT_PRICE=1.00
 
-# LLM Provider (same as summariser bot)
-AX_API_KEY=your_llm_api_key_here
-AX_MODEL=your_model_name
-AX_PROVIDER=your_provider
+# LLM Provider (OpenAI - same as summariser bot)
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=your_model_name
+OPENAI_PROVIDER=openai
 
 # URLs
 PUBLIC_WEB_URL=https://your-cumbot-app.up.railway.app
