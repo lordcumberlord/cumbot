@@ -1066,90 +1066,17 @@ addEntrypoint({
       chatContext = "No recent messages from this person found.";
     }
     
-    // Call LLM - try axClient first, create fallback if needed
-    console.log("[cumbot] === STARTING Cum For handler ===");
-    console.log("[cumbot] axClient.ax available:", !!axClient.ax);
-    
-    let llm = axClient.ax;
+    // Call LLM - use axClient directly (same as summariser)
+    const llm = axClient.ax;
     if (!llm) {
-      console.log("[cumbot] axClient.ax is null, checking for fallback OpenAI client...");
-      // If axClient.ax is null but OpenAI env vars are set, create a fallback client
-      const openaiApiKey = process.env.OPENAI_API_KEY;
-      const openaiApiUrl = process.env.OPENAI_API_URL;
-      const openaiModel = process.env.OPENAI_MODEL;
-      
-      console.log("[cumbot] OpenAI env vars check:", {
-        hasKey: !!openaiApiKey,
-        hasUrl: !!openaiApiUrl,
-        hasModel: !!openaiModel,
-        keyLength: openaiApiKey?.length || 0,
-        urlValue: openaiApiUrl || "not set",
-        modelValue: openaiModel || "not set",
-      });
-      
-      if (!openaiApiKey || !openaiApiUrl || !openaiModel) {
-        console.error("[cumbot] ❌ LLM not configured: axClient.ax is null and OpenAI env vars missing");
-        console.error("[cumbot] Missing vars:", {
-          hasKey: !!openaiApiKey,
-          hasUrl: !!openaiApiUrl,
-          hasModel: !!openaiModel,
-        });
-        // Return a friendly fallback instead of error
-        return {
-          output: {
-            response: `sausages are like time - they both have links in them (but sausages are tastier)`,
-          },
-          model: "fallback-no-config",
-        };
-      }
-      
-      // Try to create a fallback OpenAI client WITHOUT x402 config
-      // This should allow it to work without x402 account/private key
-      console.log("[cumbot] ✅ OpenAI env vars present, creating fallback OpenAI client (no x402)");
-      try {
-        const fallbackClient = createAxLLMClient({
-          logger: {
-            warn: (msg: string) => console.warn(`[cumbot-fallback] ${msg}`),
-            error: (msg: string, err?: any) => console.error(`[cumbot-fallback] ${msg}`, err),
-          },
-          provider: "openai",
-          model: openaiModel,
-          apiKey: openaiApiKey,
-          apiUrl: openaiApiUrl,
-          // Explicitly exclude x402 config to prevent initialization attempts
-          // @ts-ignore - ignore type errors for missing x402 fields
-          account: undefined,
-          privateKey: undefined,
-        });
-        llm = fallbackClient.ax;
-        
-        if (!llm) {
-          console.error("[cumbot] ❌ Failed to create fallback OpenAI client - axClient.ax is still null after creation");
-          // Return a friendly fallback instead of error
-          return {
-            output: {
-              response: `sausages are like time - they both have links in them (but sausages are tastier)`,
-            },
-            model: "fallback-no-llm",
-          };
-        }
-        console.log("[cumbot] ✅ Successfully created fallback OpenAI client, llm available:", !!llm);
-      } catch (fallbackError: any) {
-        console.error("[cumbot] ❌ Error creating fallback client:", fallbackError);
-        console.error("[cumbot] Error details:", {
-          message: fallbackError?.message,
-          stack: fallbackError?.stack?.substring(0, 500),
-        });
-        // Return a friendly fallback instead of error
-        return {
-          output: {
-            response: `sausages are like time - they both have links in them (but sausages are tastier)`,
-          },
-          model: "fallback-error",
-        };
-      }
-    } else {
-      console.log("[cumbot] ✅ Using existing axClient.ax");
+      // If LLM is not available, return fallback response (same approach as summariser)
+      console.warn("[cumbot] axClient.ax is null - LLM not configured, returning fallback response");
+      return {
+        output: {
+          response: `sausages are like time - they both have links in them (but sausages are tastier)`,
+        },
+        model: "fallback-no-llm",
+      };
     }
     
     try {
