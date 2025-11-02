@@ -154,9 +154,19 @@ async function handleDiscordInteraction(req: Request): Promise<Response> {
           return makeEphemeralResponse(`Usage: /cum for <topic> or /cum for @username`);
         }
         
-        const query = String(forOption.value).trim();
+        let query = String(forOption.value).trim();
         if (!query) {
           return makeEphemeralResponse(`Please specify a topic or @username`);
+        }
+        
+        // Handle "me" - convert to the user who sent the command
+        if (query.toLowerCase() === "me" || query.toLowerCase() === "@me") {
+          const userId = interaction.user?.id || interaction.member?.user?.id;
+          if (userId) {
+            query = `<@${userId}>`; // Discord mention format
+          } else {
+            return makeEphemeralResponse(`Could not determine your user ID`);
+          }
         }
         
         const lookbackValidation = validateLookback(minutesOption?.value ?? 60);
@@ -389,22 +399,29 @@ After payment, /Cum's response will appear here.`;
 
 // Handle Discord callback after payment
 async function handleDiscordCallback(req: Request): Promise<Response> {
+  console.log("[discord-callback] === CALLBACK RECEIVED ===");
   try {
     const body = await req.json();
+    console.log("[discord-callback] Request body keys:", Object.keys(body));
     const { discord_token, result } = body;
 
     if (!discord_token) {
+      console.error("[discord-callback] Missing discord_token in request");
       return Response.json({ error: "Missing discord_token" }, { status: 400 });
     }
 
     // Decode the token (it was URL-encoded when passed in the payment URL)
     const decodedToken = decodeURIComponent(discord_token);
+    console.log("[discord-callback] Decoded token prefix:", decodedToken.substring(0, 50) + "...");
     
     const callbackData = pendingDiscordCallbacks.get(decodedToken);
     if (!callbackData) {
       console.error(`[discord-callback] Token not found or expired: ${decodedToken.substring(0, 30)}...`);
+      console.error(`[discord-callback] Available tokens count: ${pendingDiscordCallbacks.size}`);
       return Response.json({ error: "Invalid or expired callback token" }, { status: 404 });
     }
+    
+    console.log("[discord-callback] Found callback data for token, processing...");
 
     // Remove from pending immediately
     pendingDiscordCallbacks.delete(decodedToken);
@@ -1618,7 +1635,13 @@ const server = Bun.serve({
                 : url.origin;
               const callbackUrl = `${serverHost}/discord-callback`;
 
-              console.log(`[discord] Triggering callback to: ${callbackUrl}`);
+              console.log(`[discord] 🔔 Triggering callback to: ${callbackUrl}`);
+              console.log(`[discord] Callback payload:`, {
+                hasToken: !!discordCallback,
+                tokenLength: discordCallback?.length || 0,
+                hasResult: !!result,
+                resultKeys: result ? Object.keys(result) : [],
+              });
 
               const callbackResponse = await fetch(callbackUrl, {
                 method: "POST",
@@ -1629,14 +1652,16 @@ const server = Bun.serve({
                 }),
               });
 
+              console.log(`[discord] Callback response status: ${callbackResponse.status}`);
               if (!callbackResponse.ok) {
                 const errorText = await callbackResponse.text();
                 console.error(
-                  `[discord] Callback failed: ${callbackResponse.status} ${errorText}`
+                  `[discord] ❌ Callback failed: ${callbackResponse.status} ${errorText}`
                 );
                 console.error(`[discord] Callback URL was: ${callbackUrl}`);
               } else {
-                console.log(`[discord] Callback successful`);
+                const responseText = await callbackResponse.text();
+                console.log(`[discord] ✅ Callback successful, response:`, responseText.substring(0, 200));
               }
             } catch (err) {
               console.error("[discord] Failed to parse entrypoint response:", err);
