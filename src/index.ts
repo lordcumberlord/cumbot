@@ -915,12 +915,9 @@ const server = Bun.serve({
         });
         
         // Wrap fetch with payment handling (pass viem wallet client)
-        // maxValue: convert price to USDC (6 decimals)
-        // e.g., $1.00 = 1000000, $0.05 = 50000
-        const priceFloat = parseFloat(cfg.price || '1.00');
-        const maxValueUSDC = BigInt(Math.floor(priceFloat * 1000000));
+        // maxValue: $1.00 USDC = 1000000 (6 decimals) for CumBot
         // Note: x402 uses EIP-3009 for gasless transactions - facilitator pays gas
-        const x402Fetch = wrapFetchWithPayment(fetch, walletClient, maxValueUSDC);
+        const x402Fetch = wrapFetchWithPayment(fetch, walletClient, BigInt(1000000));
         
         const entrypointUrl = cfg.entrypointUrl;
         
