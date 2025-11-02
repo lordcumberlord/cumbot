@@ -1621,8 +1621,8 @@ const server = Bun.serve({
       }
     }
     
-      // Agent app routes
-      return app.fetch(req);
+    // Agent app routes
+    return app.fetch(req);
     } catch (error: any) {
       console.error("[server] Unhandled error in fetch:", error);
       return new Response(
