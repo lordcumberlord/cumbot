@@ -1060,15 +1060,62 @@ addEntrypoint({
       chatContext = "No recent messages from this person found.";
     }
     
-    // Call LLM
-    const llm = axClient.ax;
+    // Call LLM - try axClient first, create fallback if needed
+    let llm = axClient.ax;
     if (!llm) {
-      return {
-        output: {
-          response: `error: llm not configured`,
-        },
-        model: "error",
-      };
+      // If axClient.ax is null but OpenAI env vars are set, create a fallback client
+      const openaiApiKey = process.env.OPENAI_API_KEY;
+      const openaiApiUrl = process.env.OPENAI_API_URL;
+      const openaiModel = process.env.OPENAI_MODEL;
+      
+      if (!openaiApiKey || !openaiApiUrl || !openaiModel) {
+        console.error("[cumbot] LLM not configured: axClient.ax is null and OpenAI env vars missing");
+        return {
+          output: {
+            response: `error: llm not configured - need OPENAI_API_KEY, OPENAI_API_URL, and OPENAI_MODEL`,
+          },
+          model: "error",
+        };
+      }
+      
+      // Try to create a fallback OpenAI client using the same createAxLLMClient
+      // with just OpenAI config (no x402)
+      console.log("[cumbot] axClient.ax is null, creating fallback OpenAI client");
+      try {
+        const fallbackClient = createAxLLMClient({
+          logger: {
+            warn: (msg: string) => console.warn(`[cumbot-fallback] ${msg}`),
+            error: (msg: string, err?: any) => console.error(`[cumbot-fallback] ${msg}`, err),
+          },
+          provider: "openai",
+          model: openaiModel,
+          apiKey: openaiApiKey,
+          x402: {
+            ai: {
+              apiURL: openaiApiUrl,
+            },
+          },
+        });
+        llm = fallbackClient.ax;
+        
+        if (!llm) {
+          console.error("[cumbot] Failed to create fallback OpenAI client");
+          return {
+            output: {
+              response: `error: failed to create llm client`,
+            },
+            model: "error",
+          };
+        }
+      } catch (fallbackError: any) {
+        console.error("[cumbot] Error creating fallback client:", fallbackError);
+        return {
+          output: {
+            response: `error: ${fallbackError?.message || "failed to create llm client"}`,
+          },
+          model: "error",
+        };
+      }
     }
     
     try {
