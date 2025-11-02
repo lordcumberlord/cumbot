@@ -1652,7 +1652,7 @@ if (telegramToken) {
         baseUrl: publicBaseUrl,
       });
       await bot.start();
-      console.log("🤖 Telegram summariser bot ready");
+      console.log("🤖 Telegram bot ready");
     } catch (err: any) {
       // Handle 409 conflict gracefully (multiple instances running)
       if (err?.error_code === 409) {
@@ -1660,14 +1660,22 @@ if (telegramToken) {
         console.warn("[telegram] This is normal if the bot is running on Railway or in another terminal.");
         return;
       }
-      // Handle 404 on deleteWebhook - harmless, just means no webhook exists
-      if (err?.error_code === 404 && err?.method === "deleteWebhook") {
-        console.warn("[telegram] No webhook to delete (404) - this is normal for new bots");
-        console.warn("[telegram] Bot should still work, but if issues persist, check bot token");
-        // Don't crash - the bot might still be functional
+      // Handle 404 errors - usually means invalid token or bot doesn't exist
+      if (err?.error_code === 404) {
+        if (err?.method === "deleteWebhook") {
+          console.warn("[telegram] No webhook to delete (404) - this is normal for new bots");
+        } else if (err?.method === "getMe") {
+          console.error("[telegram] Bot token appears invalid (404 on getMe). Check TELEGRAM_BOT_TOKEN in Railway.");
+        } else {
+          console.warn(`[telegram] 404 error on ${err?.method || "unknown method"}: ${err?.description || "Not Found"}`);
+        }
+        // Don't crash server - continue without Telegram bot
+        console.warn("[telegram] Continuing without Telegram bot - Discord bot should still work");
         return;
       }
-      console.error("[telegram] Failed to start bot", err);
+      // For any other errors, log but don't crash
+      console.error("[telegram] Failed to start bot:", err?.message || err);
+      console.warn("[telegram] Continuing without Telegram bot - Discord bot should still work");
     }
   })();
 } else {
