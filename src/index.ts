@@ -1440,7 +1440,10 @@ const server = Bun.serve({
         url.pathname.includes("summarise chat") ||
         url.pathname.includes("summarise%20telegram%20chat") ||
         url.pathname.includes("summarise telegram chat");
-      if (isSummariseEndpoint) {
+      const isCumForEndpoint =
+        url.pathname.includes("Cum%20For") ||
+        url.pathname.includes("Cum For");
+      if (isSummariseEndpoint || isCumForEndpoint) {
         const hasPaymentHeader = req.headers.get("X-PAYMENT");
         console.log(`[payment] Entrypoint called: ${url.pathname}`);
 
