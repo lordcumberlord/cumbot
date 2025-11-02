@@ -974,7 +974,7 @@ addEntrypoint({
     let chatContext = "";
     
     if (platform === "discord" && channelId) {
-      // Fetch Discord messages - handle permission errors gracefully
+      // Fetch Discord messages
       const token = process.env.DISCORD_BOT_TOKEN;
       if (!token) {
         throw new Error("DISCORD_BOT_TOKEN not set");
@@ -984,54 +984,42 @@ addEntrypoint({
       const now = new Date();
       const start = new Date(now.getTime() - lookbackMinutes * 60 * 1000);
       
-      try {
-        // Fetch messages using the same logic as summarizer
-        const fetchedMessages = await fetchMessagesBetween({
-          token,
-          baseUrl,
-          channelId,
-          start,
-          end: now,
-          initialAfterSnowflake: snowflakeFromDate(start, -1n),
-          endMessageId: undefined,
-        });
+      // Fetch messages using the same logic as summarizer
+      const fetchedMessages = await fetchMessagesBetween({
+        token,
+        baseUrl,
+        channelId,
+        start,
+        end: now,
+        initialAfterSnowflake: snowflakeFromDate(start, -1n),
+        endMessageId: undefined,
+      });
+      
+      // Filter messages based on query type
+      if (queryType === "person") {
+        // Extract username from query (@username or <@123456>)
+        const usernameMatch = query.match(/@(\w+)/) || query.match(/<@(\d+)>/);
+        const targetUsername = usernameMatch ? usernameMatch[1] : query.replace("@", "");
         
-        // Filter messages based on query type
-        if (queryType === "person") {
-          // Extract username from query (@username or <@123456>)
-          const usernameMatch = query.match(/@(\w+)/) || query.match(/<@(\d+)>/);
-          const targetUsername = usernameMatch ? usernameMatch[1] : query.replace("@", "");
-          
-          // Filter messages from this person
-          messages = buildDiscordSummarizerMessages(fetchedMessages, null)
-            .filter(msg => {
-              const authorLower = msg.author.toLowerCase();
-              return authorLower.includes(targetUsername.toLowerCase()) ||
-                     authorLower.includes(query.toLowerCase().replace("@", ""));
-            });
-        } else {
-          // Topic: filter messages that mention the topic
-          const queryLower = query.toLowerCase();
-          messages = buildDiscordSummarizerMessages(fetchedMessages, null)
-            .filter(msg => msg.text.toLowerCase().includes(queryLower));
-        }
-        
-        // Build chat context string
-        chatContext = messages
-          .slice(0, 20) // Limit to recent 20 messages
-          .map(msg => `${msg.author}: ${msg.text}`)
-          .join("\n");
-      } catch (error: any) {
-        // Handle permission errors gracefully - continue without context
-        if (error?.message?.includes("403") || error?.message?.includes("Missing Access") || error?.message?.includes("50001")) {
-          console.warn("[cumbot] ⚠️ Cannot read message history (403 Missing Access) - continuing without context");
-          console.warn("[cumbot] Bot may need 'Read Message History' permission in this channel");
-          chatContext = ""; // Empty context - LLM will handle this per prompt instructions
-        } else {
-          // Re-throw other errors
-          throw error;
-        }
+        // Filter messages from this person
+        messages = buildDiscordSummarizerMessages(fetchedMessages, null)
+          .filter(msg => {
+            const authorLower = msg.author.toLowerCase();
+            return authorLower.includes(targetUsername.toLowerCase()) ||
+                   authorLower.includes(query.toLowerCase().replace("@", ""));
+          });
+      } else {
+        // Topic: filter messages that mention the topic
+        const queryLower = query.toLowerCase();
+        messages = buildDiscordSummarizerMessages(fetchedMessages, null)
+          .filter(msg => msg.text.toLowerCase().includes(queryLower));
       }
+      
+      // Build chat context string
+      chatContext = messages
+        .slice(0, 20) // Limit to recent 20 messages
+        .map(msg => `${msg.author}: ${msg.text}`)
+        .join("\n");
         
     } else if (platform === "telegram" && chatId) {
       // Fetch Telegram messages
