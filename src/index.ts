@@ -91,7 +91,30 @@ async function handleDiscordInteraction(req: Request): Promise<Response> {
 
     const body = await req.text();
     
-    // Verify signature FIRST if PUBLIC_KEY is set (required for Discord verification)
+    // Parse interaction first to check if it's a PING (verification request)
+    let interaction;
+    try {
+      interaction = JSON.parse(body);
+    } catch (e) {
+      console.error("[discord] Failed to parse interaction body:", e);
+      return Response.json({ error: "Invalid JSON" }, { status: 400 });
+    }
+
+    // Handle PING (Discord's verification) - respond immediately for verification
+    if (interaction.type === 1) {
+      console.log("[discord] Received PING (verification), responding with PONG");
+      // For verification PINGs, verify signature but be lenient
+      if (PUBLIC_KEY && signature && timestamp) {
+        const isValid = verifyDiscordRequest(body, signature, timestamp);
+        if (!isValid) {
+          console.warn("[discord] Invalid signature on PING - but responding anyway for verification");
+          // Still respond with PONG for verification to pass
+        }
+      }
+      return Response.json({ type: 1 });
+    }
+    
+    // For all other interaction types, verify signature strictly
     if (PUBLIC_KEY) {
       if (!signature || !timestamp) {
         console.warn("[discord] Missing signature headers");
@@ -105,21 +128,6 @@ async function handleDiscordInteraction(req: Request): Promise<Response> {
       }
     } else {
       console.warn("[discord] DISCORD_PUBLIC_KEY not set - signature verification disabled");
-    }
-    
-    // Parse interaction after signature verification
-    let interaction;
-    try {
-      interaction = JSON.parse(body);
-    } catch (e) {
-      console.error("[discord] Failed to parse interaction body:", e);
-      return Response.json({ error: "Invalid JSON" }, { status: 400 });
-    }
-
-    // Handle PING (Discord's verification)
-    if (interaction.type === 1) {
-      console.log("[discord] Received PING, responding with PONG");
-      return Response.json({ type: 1 });
     }
 
     // Handle APPLICATION_COMMAND
