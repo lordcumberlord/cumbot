@@ -1061,26 +1061,45 @@ addEntrypoint({
     }
     
     // Call LLM - try axClient first, create fallback if needed
+    console.log("[cumbot] === STARTING Cum For handler ===");
+    console.log("[cumbot] axClient.ax available:", !!axClient.ax);
+    
     let llm = axClient.ax;
     if (!llm) {
+      console.log("[cumbot] axClient.ax is null, checking for fallback OpenAI client...");
       // If axClient.ax is null but OpenAI env vars are set, create a fallback client
       const openaiApiKey = process.env.OPENAI_API_KEY;
       const openaiApiUrl = process.env.OPENAI_API_URL;
       const openaiModel = process.env.OPENAI_MODEL;
       
+      console.log("[cumbot] OpenAI env vars check:", {
+        hasKey: !!openaiApiKey,
+        hasUrl: !!openaiApiUrl,
+        hasModel: !!openaiModel,
+        keyLength: openaiApiKey?.length || 0,
+        urlValue: openaiApiUrl || "not set",
+        modelValue: openaiModel || "not set",
+      });
+      
       if (!openaiApiKey || !openaiApiUrl || !openaiModel) {
-        console.error("[cumbot] LLM not configured: axClient.ax is null and OpenAI env vars missing");
+        console.error("[cumbot] ❌ LLM not configured: axClient.ax is null and OpenAI env vars missing");
+        console.error("[cumbot] Missing vars:", {
+          hasKey: !!openaiApiKey,
+          hasUrl: !!openaiApiUrl,
+          hasModel: !!openaiModel,
+        });
+        // Return a friendly fallback instead of error
         return {
           output: {
-            response: `error: llm not configured - need OPENAI_API_KEY, OPENAI_API_URL, and OPENAI_MODEL`,
+            response: `sausages are like time - they both have links in them (but sausages are tastier)`,
           },
-          model: "error",
+          model: "fallback-no-config",
         };
       }
       
       // Try to create a fallback OpenAI client WITHOUT x402 config
       // This should allow it to work without x402 account/private key
-      console.log("[cumbot] axClient.ax is null, creating fallback OpenAI client (no x402)");
+      console.log("[cumbot] ✅ OpenAI env vars present, creating fallback OpenAI client (no x402)");
       try {
         const fallbackClient = createAxLLMClient({
           logger: {
@@ -1090,24 +1109,32 @@ addEntrypoint({
           provider: "openai",
           model: openaiModel,
           apiKey: openaiApiKey,
-          // DON'T include x402 config - this should allow it to work without x402 setup
+          apiUrl: openaiApiUrl,
+          // Explicitly exclude x402 config to prevent initialization attempts
+          // @ts-ignore - ignore type errors for missing x402 fields
+          account: undefined,
+          privateKey: undefined,
         });
         llm = fallbackClient.ax;
         
         if (!llm) {
-          console.error("[cumbot] Failed to create fallback OpenAI client - axClient.ax is still null");
-          // Last resort: return a simple fallback response
+          console.error("[cumbot] ❌ Failed to create fallback OpenAI client - axClient.ax is still null after creation");
+          // Return a friendly fallback instead of error
           return {
             output: {
               response: `sausages are like time - they both have links in them (but sausages are tastier)`,
             },
-            model: "fallback",
+            model: "fallback-no-llm",
           };
         }
-        console.log("[cumbot] Successfully created fallback OpenAI client");
+        console.log("[cumbot] ✅ Successfully created fallback OpenAI client, llm available:", !!llm);
       } catch (fallbackError: any) {
-        console.error("[cumbot] Error creating fallback client:", fallbackError);
-        // Return a simple fallback instead of error
+        console.error("[cumbot] ❌ Error creating fallback client:", fallbackError);
+        console.error("[cumbot] Error details:", {
+          message: fallbackError?.message,
+          stack: fallbackError?.stack?.substring(0, 500),
+        });
+        // Return a friendly fallback instead of error
         return {
           output: {
             response: `sausages are like time - they both have links in them (but sausages are tastier)`,
@@ -1115,25 +1142,37 @@ addEntrypoint({
           model: "fallback-error",
         };
       }
+    } else {
+      console.log("[cumbot] ✅ Using existing axClient.ax");
     }
     
     try {
+      // Log chat context for debugging
+      console.log(`[cumbot] 🚀 Calling LLM flow with query="${query}", queryType="${queryType}", chatContext length=${chatContext.length}`);
+      if (chatContext) {
+        console.log(`[cumbot] Chat context preview: ${chatContext.substring(0, 200)}...`);
+      }
+      
       const result = await cumBotFlow.forward(llm, {
         query,
         queryType,
         platform,
-        chatContext,
+        chatContext: chatContext || "",
         maxChars: 280,
       });
       
+      const responseText = (result.responseText || "").trim() || "something broke in my head";
+      console.log(`[cumbot] ✅ LLM response received (length: ${responseText.length}):`, responseText.substring(0, 100));
+      
       return {
         output: {
-          response: (result.responseText || "").trim() || "something broke in my head",
+          response: responseText,
         },
         model: "cum-bot",
       };
     } catch (error: any) {
-      console.error("[cumbot] LLM flow error:", error);
+      console.error("[cumbot] ❌ LLM flow error:", error);
+      console.error("[cumbot] Error stack:", error?.stack?.substring(0, 500));
       return {
         output: {
           response: `error thinking: ${error?.message || "unknown"}`,
