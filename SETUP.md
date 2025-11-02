@@ -66,8 +66,8 @@ ENTRYPOINT_PRICE=1.00
 
 # LLM Provider (OpenAI - same as summariser bot)
 OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_API_URL=your_openai_api_url_here
 OPENAI_MODEL=your_model_name
-OPENAI_PROVIDER=openai
 
 # URLs
 PUBLIC_WEB_URL=https://your-cumbot-app.up.railway.app
