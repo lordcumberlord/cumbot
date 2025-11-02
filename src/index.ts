@@ -1158,15 +1158,17 @@ const server = Bun.serve({
     if (url.pathname === "/download" && req.method === "GET") {
       const origin = url.origin;
       const ogImageUrl = `${origin}/assets/x402-card.svg`;
+      const discordAppId = process.env.DISCORD_APPLICATION_ID || "YOUR_APP_ID";
+      const discordInviteUrl = `https://discord.com/oauth2/authorize?client_id=${discordAppId}&scope=bot&permissions=68608`;
       return new Response(`<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>x402 Summariser Bot</title>
-  <meta name="description" content="Summarise your Discord & Telegram chats for $0.05 via x402.">
-  <meta property="og:title" content="x402 Summariser Bot">
-  <meta property="og:description" content="Summarise your Discord & Telegram chats for $0.05 via x402.">
+  <title>CumBot</title>
+  <meta name="description" content="Summon /Cum to philosophize about topics or people in your Discord & Telegram chats. Pay $1.00 via x402.">
+  <meta property="og:title" content="CumBot">
+  <meta property="og:description" content="Summon /Cum to philosophize about topics or people in your Discord & Telegram chats. Pay $1.00 via x402.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="${origin}/download">
   <meta property="og:image" content="${ogImageUrl}">
@@ -1174,8 +1176,8 @@ const server = Bun.serve({
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="x402 Summariser Bot">
-  <meta name="twitter:description" content="Summarise your Discord & Telegram chats for $0.05 via x402.">
+  <meta name="twitter:title" content="CumBot">
+  <meta name="twitter:description" content="Summon /Cum to philosophize about topics or people in your Discord & Telegram chats. Pay $1.00 via x402.">
   <meta name="twitter:image" content="${ogImageUrl}">
   <style>
     :root {
@@ -1413,16 +1415,16 @@ const server = Bun.serve({
         <div class="logo-antenna"><span></span><span></span></div>
         <div class="logo-face"><span class="logo-eye"></span><span class="logo-eye"></span></div>
       </div>
-      <h1>x402 Summariser Bot</h1>
-      <p class="lead">Bring instant AI summaries to your community and pay via x402 with each recap. Install the Discord or Telegram bot and get channel highlights on demand.</p>
+      <h1>CumBot</h1>
+      <p class="lead">Summon /Cum to philosophize about topics or people in your group chats. A semi-interested philosopher who lives in Discord & Telegram.</p>
     </header>
 
     <section>
       <h2>How It Works</h2>
       <ol class="steps">
         <li>Install the bot into your Discord server or Telegram chat.</li>
-        <li>Use the <code>/summarise</code> command to request highlights for the past few hours.</li>
-        <li>Pay securely via x402, then receive an actionable summary right in your chat.</li>
+        <li>Use <code>/Cum for &lt;topic&gt;</code> or <code>/Cum for @username</code> to request philosophical reflections.</li>
+        <li>Pay securely via x402 ($1.00), then receive a dry, ironic response right in your chat.</li>
       </ol>
     </section>
 
@@ -1431,13 +1433,13 @@ const server = Bun.serve({
       <div class="actions">
         <div class="action-card">
           <h3>Discord Bot</h3>
-          <p>Add the bot to your server in seconds and start generating summaries immediately.</p>
-          <a class="button" href="https://discord.com/oauth2/authorize?client_id=1433449171565678603&scope=bot&permissions=68608" target="_blank" rel="noopener">Install on Discord</a>
+          <p>Add the bot to your server in seconds and start summoning /Cum immediately.</p>
+          <a class="button" href="${discordInviteUrl}" target="_blank" rel="noopener">Install on Discord</a>
         </div>
         <div class="action-card">
           <h3>Telegram Bot</h3>
-          <p>Add the bot to your chats and request channel summaries directly inside Telegram.</p>
-          <a class="button" href="https://t.me/x402SummariserBot" target="_blank" rel="noopener">Open in Telegram</a>
+          <p>Add the bot to your chats and request philosophical reflections directly inside Telegram.</p>
+          <a class="button" href="https://t.me/CumBot" target="_blank" rel="noopener">Open in Telegram</a>
         </div>
       </div>
     </section>
