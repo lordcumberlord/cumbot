@@ -1496,9 +1496,19 @@ const server = Bun.serve({
         const hasPaymentHeader = req.headers.get("X-PAYMENT");
         console.log(`[payment] Entrypoint called: ${url.pathname}`);
 
-        const sourceLabel = url.pathname.includes("telegram")
-          ? "Summarise Telegram chat"
-          : "Summarise Discord channel";
+        // Determine source label and price based on endpoint
+        let sourceLabel: string;
+        let defaultPrice: string;
+        
+        if (isCumForEndpoint) {
+          sourceLabel = "CumBot - Cum For";
+          defaultPrice = "1.00";
+        } else {
+          sourceLabel = url.pathname.includes("telegram")
+            ? "Summarise Telegram chat"
+            : "Summarise Discord channel";
+          defaultPrice = "0.05";
+        }
 
         const payToAddress =
           process.env.PAY_TO || "0x1b0006DbFbF4d8Ec99cd7C40C43566EaA7D95feD";
@@ -1508,7 +1518,7 @@ const server = Bun.serve({
           process.env.AGENT_URL || `https://cumbot-production.up.railway.app`;
         const fullEntrypointUrl =
           agentBaseUrl + url.pathname + (url.search ? url.search : "");
-        const price = process.env.ENTRYPOINT_PRICE || "0.05";
+        const price = process.env.ENTRYPOINT_PRICE || defaultPrice;
         const currency = process.env.PAYMENT_CURRENCY || "USDC";
         const x402Version = 1.0;
 
