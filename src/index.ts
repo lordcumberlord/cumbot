@@ -246,13 +246,15 @@ async function handleDiscordInteraction(req: Request): Promise<Response> {
           // Check for permission errors (403) - provide helpful guidance
           if (entrypointResponse.status === 500) {
             const errorMessage = responseData.error?.message || "";
-            if (errorMessage.includes("Missing Access") || errorMessage.includes("50001")) {
-              console.error(`[discord] Permission error:`, responseData);
+            const errorCode = responseData.error?.code || responseData.code;
+            // Discord error code 50001 = "Missing Access" (missing permissions)
+            if (errorMessage.includes("Missing Access") || errorMessage.includes("50001") || errorCode === 50001) {
+              console.error(`[discord] Permission error (code: ${errorCode || "unknown"}):`, responseData);
               await fetch(followupUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                  content: `❌ **Permission Error**\n\nThe bot needs permission to read messages in this channel.\n\n**Fix:**\n1. Go to **Server Settings** → **Roles** → Select **CumBot**\n2. Enable: **View Channels**, **Read Message History**\n3. Go to **Channel Settings** → **Permissions** → **CumBot**\n4. Enable: **View Channel**, **Read Message History**\n\nIf the bot role is lower than other roles, move it higher in the role list.`,
+                  content: `❌ **Permission Error (Discord Code: 50001)**\n\nThe bot needs permission to read messages in this channel.\n\n**Fix:**\n1. Re-invite the bot using: https://discord.com/oauth2/authorize?client_id=1434528093149724762&scope=bot&permissions=17180200000\n2. Go to **Server Settings** → **Roles** → Select **CumBot**\n3. Enable: **View Channels**, **Read Message History**\n4. Go to **Channel Settings** → **Permissions** → **CumBot**\n5. Enable: **View Channel**, **Read Message History**\n\nIf the bot role is lower than other roles, move it higher in the role list.`,
                 }),
               });
               return;
@@ -1160,8 +1162,9 @@ const server = Bun.serve({
       const ogImageUrl = `${origin}/assets/x402-card.svg`;
       const discordAppId = process.env.DISCORD_APPLICATION_ID || "YOUR_APP_ID";
       // Enhanced permissions: View Channels + Send Messages + Read Message History + Use External Emojis + Send Messages in Threads + Add Reactions
-      // 1024 | 2048 | 65536 | 262144 | 17179869184 | 64 = 17180200000
-      const discordInviteUrl = `https://discord.com/oauth2/authorize?client_id=${discordAppId}&scope=bot&permissions=17180200000`;
+      // Permissions calculated as sum (bitwise OR doesn't work with large numbers): 1024 + 2048 + 65536 + 262144 + 17179869184 + 64 = 17180200000
+      const permissions = String(17180200000); // Ensure it's a string for URL
+      const discordInviteUrl = `https://discord.com/oauth2/authorize?client_id=${encodeURIComponent(discordAppId)}&scope=bot&permissions=${permissions}`;
       return new Response(`<!DOCTYPE html>
 <html lang="en">
 <head>
