@@ -1444,7 +1444,7 @@ const server = Bun.serve({
         <div class="action-card">
           <h3>Telegram Bot</h3>
           <p>Add the bot to your chats and request philosophical reflections directly inside Telegram.</p>
-          <a class="button" href="https://t.me/CumBot" target="_blank" rel="noopener">Open in Telegram</a>
+          <a class="button" href="https://t.me/x402CumBot" target="_blank" rel="noopener">Open in Telegram</a>
         </div>
       </div>
     </section>
