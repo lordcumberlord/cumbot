@@ -2283,31 +2283,6 @@ async function fetchMessagesBetween({
   initialAfterSnowflake: string;
   endMessageId?: string;
 }): Promise<DiscordMessage[]> {
-  // First, try to get channel info to diagnose permissions
-  try {
-    const channelInfoUrl = `${baseUrl}/channels/${channelId}`;
-    console.log(`[discord-fetch] 🔍 Checking channel permissions via GET ${channelInfoUrl}`);
-    const channelInfoResponse = await fetch(channelInfoUrl, {
-      headers: buildDiscordHeaders(token),
-    });
-    
-    if (channelInfoResponse.ok) {
-      const channelInfo = await channelInfoResponse.json();
-      console.log(`[discord-fetch] ✅ Can access channel info:`, {
-        id: channelInfo.id,
-        name: channelInfo.name,
-        type: channelInfo.type,
-        guild_id: channelInfo.guild_id,
-      });
-    } else {
-      const channelError = await safeJson(channelInfoResponse);
-      console.error(`[discord-fetch] ⚠️ Cannot access channel info (status ${channelInfoResponse.status}):`, channelError);
-      console.error(`[discord-fetch] This suggests the bot lacks basic channel access permissions.`);
-    }
-  } catch (channelCheckError) {
-    console.warn(`[discord-fetch] Failed to check channel info:`, channelCheckError);
-  }
-
   const messages: DiscordMessage[] = [];
   let after = initialAfterSnowflake;
   let page = 0;
@@ -2327,33 +2302,7 @@ async function fetchMessagesBetween({
     if (!response.ok) {
       const errorBody = await safeJson(response);
       console.error(`[discord-fetch] ❌ Failed to fetch messages (status ${response.status})`);
-      console.error(`[discord-fetch] URL: ${url.toString()}`);
-      console.error(`[discord-fetch] Full error response:`, JSON.stringify(errorBody, null, 2));
-      
-      // Log specific permission error details
-      if (response.status === 403) {
-        const errorCode = errorBody?.code || errorBody?.error?.code;
-        const errorMessage = errorBody?.message || errorBody?.error?.message || "";
-        
-        console.error(`[discord-fetch] 🔒 403 Forbidden - Permission Issue`);
-        console.error(`[discord-fetch] Discord Error Code: ${errorCode || "unknown"}`);
-        console.error(`[discord-fetch] Discord Error Message: ${errorMessage}`);
-        console.error(`[discord-fetch] ========================================`);
-        console.error(`[discord-fetch] WHY POSTING WORKS BUT READING DOESN'T:`);
-        console.error(`[discord-fetch] - Posting uses interaction token (special temporary permissions)`);
-        console.error(`[discord-fetch] - Reading requires bot token + channel role permissions`);
-        console.error(`[discord-fetch] - Interaction tokens bypass normal permissions for followup messages`);
-        console.error(`[discord-fetch] ========================================`);
-        console.error(`[discord-fetch] MISSING PERMISSION: Read Message History (permission bit: 65536)`);
-        console.error(`[discord-fetch] Current permissions requested in invite: 17180200000`);
-        console.error(`[discord-fetch] This includes: View Channels (1024) + Send Messages (2048) + Read Message History (65536) + ...`);
-        console.error(`[discord-fetch] ========================================`);
-        console.error(`[discord-fetch] SOLUTIONS:`);
-        console.error(`[discord-fetch] 1. Re-invite bot: https://discord.com/oauth2/authorize?client_id=1434528093149724762&scope=bot&permissions=17180200000`);
-        console.error(`[discord-fetch] 2. Check channel permissions: Server Settings > Channels > [Channel] > Permissions > CumBot > Enable "Read Message History"`);
-        console.error(`[discord-fetch] 3. Check role hierarchy: Server Settings > Roles > Move CumBot role ABOVE roles with conflicting permissions`);
-        console.error(`[discord-fetch] 4. Verify role permissions: Server Settings > Roles > CumBot > Enable "Read Message History"`);
-      }
+      console.error(`[discord-fetch] Error response:`, errorBody);
       
       throw new Error(
         `Failed to fetch Discord messages (status ${response.status}): ${
