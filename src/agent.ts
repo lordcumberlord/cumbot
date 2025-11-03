@@ -1039,20 +1039,41 @@ addEntrypoint({
       
       // Filter messages based on query type
       if (queryType === "person") {
+        // Extract username from query (remove @ if present)
         const usernameMatch = query.match(/@(\w+)/);
-        const targetUsername = usernameMatch ? usernameMatch[1] : query.replace("@", "");
+        const targetUsername = usernameMatch ? usernameMatch[1].toLowerCase() : query.replace("@", "").toLowerCase();
         
-        messages = buildTelegramSummarizerMessages(meaningfulMessages)
-          .filter(msg => {
-            const authorLower = msg.author.toLowerCase();
-            return authorLower.includes(targetUsername.toLowerCase()) ||
-                   msg.author.includes(query);
-          });
+        // Filter BEFORE converting to SummarizerMessage so we can match against authorId and authorUsername
+        const filteredMessages = meaningfulMessages.filter(msg => {
+          // Match by username (case-insensitive)
+          const msgUsername = msg.authorUsername?.toLowerCase();
+          if (msgUsername && msgUsername === targetUsername) {
+            return true;
+          }
+          
+          // Match by display name containing the username
+          const msgDisplay = msg.authorDisplay?.toLowerCase();
+          if (msgDisplay && msgDisplay.includes(targetUsername)) {
+            return true;
+          }
+          
+          // Match if query contains @username and we have a username match
+          if (targetUsername && msgUsername && msgUsername.includes(targetUsername)) {
+            return true;
+          }
+          
+          return false;
+        });
+        
+        // Now convert to SummarizerMessage format
+        messages = buildTelegramSummarizerMessages(filteredMessages);
       } else {
         // Topic: filter messages that mention the topic
         const queryLower = query.toLowerCase();
-        messages = buildTelegramSummarizerMessages(meaningfulMessages)
-          .filter(msg => msg.text.toLowerCase().includes(queryLower));
+        const filteredMessages = meaningfulMessages.filter(msg => 
+          msg.text?.toLowerCase().includes(queryLower)
+        );
+        messages = buildTelegramSummarizerMessages(filteredMessages);
       }
       
       // Build chat context string
