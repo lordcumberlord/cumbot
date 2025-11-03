@@ -652,6 +652,25 @@ const server = Bun.serve({
       return handleTelegramCallback(req);
     }
 
+    // Serve CumBot OG image
+    if (url.pathname === "/assets/cumbot-og.png" && req.method === "GET") {
+      try {
+        const file = Bun.file("public/assets/cumbot-og.png");
+        if (await file.exists()) {
+          return new Response(file, {
+            headers: {
+              "Content-Type": "image/png",
+              "Cache-Control": "public, max-age=86400",
+            },
+          });
+        }
+      } catch (error) {
+        console.warn(`[assets] Could not load cumbot-og.png: ${error}`);
+      }
+      // Return 404 if file doesn't exist
+      return new Response("Image not found", { status: 404 });
+    }
+
     if (url.pathname === "/assets/x402-card.svg" && req.method === "GET") {
       const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
@@ -1159,7 +1178,7 @@ const server = Bun.serve({
 
     if (url.pathname === "/download" && req.method === "GET") {
       const origin = url.origin;
-      const ogImageUrl = `${origin}/assets/x402-card.svg`;
+      const ogImageUrl = `${origin}/assets/cumbot-og.png`;
       const discordAppId = process.env.DISCORD_APPLICATION_ID || "YOUR_APP_ID";
       // Enhanced permissions: View Channels + Send Messages + Read Message History + Use External Emojis + Send Messages in Threads + Add Reactions
       // Permissions calculated as sum (bitwise OR doesn't work with large numbers): 1024 + 2048 + 65536 + 262144 + 17179869184 + 64 = 17180200000
@@ -1177,7 +1196,7 @@ const server = Bun.serve({
   <meta property="og:type" content="website">
   <meta property="og:url" content="${origin}/download">
   <meta property="og:image" content="${ogImageUrl}">
-  <meta property="og:image:type" content="image/svg+xml">
+  <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary_large_image">
@@ -1191,7 +1210,7 @@ const server = Bun.serve({
     body {
       margin: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: linear-gradient(135deg, #0f172a, #111c38 40%, #010409) fixed;
+      background: #000000 fixed;
       color: #e2e8f0;
       display: flex;
       justify-content: center;
@@ -1201,9 +1220,7 @@ const server = Bun.serve({
       content: "";
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at 20% 20%, rgba(79, 70, 229, 0.16), transparent 55%),
-                  radial-gradient(circle at 80% 10%, rgba(14, 165, 233, 0.12), transparent 50%),
-                  radial-gradient(circle at 40% 80%, rgba(56, 189, 248, 0.18), transparent 55%);
+      background: #000000;
       pointer-events: none;
       z-index: -2;
     }
@@ -1211,7 +1228,7 @@ const server = Bun.serve({
       content: "";
       position: fixed;
       inset: 0;
-      background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.95));
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 1));
       z-index: -1;
     }
     .page {
@@ -1222,7 +1239,7 @@ const server = Bun.serve({
       content: "";
       position: absolute;
       inset: -40px;
-      background: radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.45), transparent 55%);
+      background: rgba(0, 0, 0, 0.8);
       filter: blur(120px);
       z-index: -1;
     }
@@ -1243,77 +1260,26 @@ const server = Bun.serve({
       color: #cbd5f5;
     }
     .logo {
-      width: 120px;
+      width: 200px;
       aspect-ratio: 1;
       margin: 0 auto 24px;
       position: relative;
-      background: radial-gradient(circle at 25% 25%, #5ef2ff, #2563eb 70%);
-      border-radius: 48% 52% 58% 42% / 60% 60% 40% 40%;
-      box-shadow: 0 20px 35px rgba(37, 99, 235, 0.45);
-    }
-    .logo::after {
-      content: "";
-      position: absolute;
-      bottom: -18px;
-      right: 26px;
-      width: 36px;
-      height: 36px;
-      background: inherit;
-      border-radius: 0 0 70% 30%;
-      transform: rotate(35deg);
-      box-shadow: inherit;
-      filter: brightness(0.95);
-    }
-    .logo-face {
-      position: absolute;
-      inset: 18% 16% 28% 16%;
-      background: radial-gradient(circle at 50% 50%, #0f172a 55%, rgba(15, 23, 42, 0.8));
-      border-radius: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-    }
-    .logo-eye {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: #8be3ff;
-      box-shadow: 0 0 12px rgba(139, 227, 255, 0.7);
-    }
-    .logo::before {
-      content: "";
-      position: absolute;
-      top: 16px;
-      left: 24px;
-      width: 14px;
-      height: 14px;
-      background: #61f0ff;
-      border-radius: 50%;
-      box-shadow: 0 88px 0 -2px #61f0ff;
-    }
-    .logo-antenna {
-      position: absolute;
-      top: -18px;
-      left: 24px;
-      right: 24px;
-      display: flex;
-      justify-content: space-between;
-    }
-    .logo-antenna span {
-      width: 18px;
-      height: 18px;
-      border-radius: 50%;
-      background: radial-gradient(circle at 40% 30%, #7ff8ff, #1d4ed8);
-      box-shadow: 0 8px 16px rgba(37, 99, 235, 0.5);
+      background: transparent;
+      border-radius: 0;
+      box-shadow: none;
+      background-image: url("${ogImageUrl}");
+      background-size: contain;
+      background-position: center;
+      background-repeat: no-repeat;
     }
     section {
-      background: linear-gradient(145deg, rgba(17, 24, 39, 0.78), rgba(15, 23, 42, 0.94));
-      border: 1px solid rgba(148, 163, 184, 0.2);
+      background: linear-gradient(145deg, rgba(0, 0, 0, 0.85), rgba(20, 20, 20, 0.95));
+      border: 1px solid rgba(148, 163, 184, 0.1);
       border-radius: 16px;
       padding: 32px;
       margin-bottom: 32px;
       backdrop-filter: blur(14px);
-      box-shadow: 0 24px 48px rgba(2, 6, 23, 0.55);
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.8);
     }
     section h2 {
       margin-top: 0;
@@ -1331,8 +1297,8 @@ const server = Bun.serve({
     .steps li {
       padding: 20px 24px;
       border-radius: 12px;
-      background: linear-gradient(160deg, rgba(30, 41, 59, 0.82), rgba(15, 23, 42, 0.88));
-      border: 1px solid rgba(148, 163, 184, 0.18);
+      background: linear-gradient(160deg, rgba(20, 20, 20, 0.9), rgba(0, 0, 0, 0.95));
+      border: 1px solid rgba(148, 163, 184, 0.1);
       position: relative;
       line-height: 1.5;
     }
@@ -1349,9 +1315,9 @@ const server = Bun.serve({
       display: grid;
       place-items: center;
       font-weight: 600;
-      background: #2563eb;
-      color: #f8fafc;
-      box-shadow: 0 8px 18px rgba(37, 99, 235, 0.4);
+      background: #ffffff;
+      color: #000000;
+      box-shadow: 0 8px 18px rgba(255, 255, 255, 0.2);
     }
     .actions {
       display: grid;
@@ -1361,8 +1327,8 @@ const server = Bun.serve({
     .action-card {
       padding: 28px;
       border-radius: 14px;
-      background: linear-gradient(160deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.78));
-      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: linear-gradient(160deg, rgba(0, 0, 0, 0.95), rgba(20, 20, 20, 0.85));
+      border: 1px solid rgba(148, 163, 184, 0.15);
       display: flex;
       flex-direction: column;
       gap: 16px;
@@ -1391,13 +1357,14 @@ const server = Bun.serve({
       transition: transform 0.18s ease, box-shadow 0.18s ease;
     }
     a.button {
-      background: linear-gradient(120deg, #2563eb, #1d4ed8);
-      color: #f8fafc;
-      box-shadow: 0 12px 32px rgba(37, 99, 235, 0.38);
+      background: linear-gradient(120deg, #ffffff, #e0e0e0);
+      color: #000000;
+      box-shadow: 0 12px 32px rgba(255, 255, 255, 0.2);
     }
     a.button:hover {
       transform: translateY(-1px);
-      box-shadow: 0 18px 28px rgba(37, 99, 235, 0.45);
+      box-shadow: 0 18px 28px rgba(255, 255, 255, 0.3);
+      background: linear-gradient(120deg, #ffffff, #f5f5f5);
     }
     span.button-disabled {
       background: rgba(148, 163, 184, 0.18);
@@ -1416,10 +1383,7 @@ const server = Bun.serve({
 <body>
   <main class="page">
     <header>
-      <div class="logo">
-        <div class="logo-antenna"><span></span><span></span></div>
-        <div class="logo-face"><span class="logo-eye"></span><span class="logo-eye"></span></div>
-      </div>
+      <div class="logo"></div>
       <h1>CumBot</h1>
       <p class="lead">Summon /Cum to philosophize about topics or people in your group chats. A semi-interested philosopher who lives in Discord & Telegram.</p>
     </header>
