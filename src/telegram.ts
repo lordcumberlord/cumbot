@@ -176,8 +176,8 @@ export function createTelegramBot(options: {
     );
 
     const paymentMessage = await ctx.reply(
-      `💳 *Payment Required*\n\n` +
-        `/Cum for "${query}" (${lookbackMinutes} min context)`,
+      `🪙 *Payment Required*\n\n` +
+        `/Cum for "${query}"`,
       {
         parse_mode: "Markdown",
         reply_markup: keyboard,

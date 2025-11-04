@@ -295,7 +295,7 @@ async function handleDiscordInteraction(req: Request): Promise<Response> {
             const price = process.env.ENTRYPOINT_PRICE || "1.00";
             const currency = process.env.PAYMENT_CURRENCY || "USDC";
             
-            const paymentMessage = `💳 **Payment Required**
+            const paymentMessage = `🪙 **Payment Required**
 
 /Cum for "${query}" — pay **$${price} ${currency}** via x402.
 
